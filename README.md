@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ứng dụng Quản lý Thẻ Tín Dụng
 
-## Getting Started
+Ứng dụng web giúp quản lý thẻ tín dụng, theo dõi ngày sao kê, ngày đến hạn và số dư cần thanh toán.
 
-First, run the development server:
+## Tính năng
+
+- Quản lý nhiều thẻ tín dụng
+- Theo dõi ngày sao kê và ngày đến hạn
+- Tính toán số dư và số tiền tối thiểu cần thanh toán
+- Hiển thị cảnh báo khi gần đến hạn thanh toán
+- Giao diện thân thiện, dễ sử dụng
+- Responsive design, hoạt động tốt trên mobile
+
+## Công nghệ sử dụng
+
+- Next.js 13+ với App Router
+- TypeScript
+- Tailwind CSS
+- Vercel Deployment
+
+## Cài đặt và Phát triển
+
+1. Clone repository:
+
+```bash
+git clone <repository-url>
+cd credit-card-manager
+```
+
+2. Cài đặt dependencies:
+
+```bash
+npm install
+```
+
+3. Chạy môi trường development:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Truy cập http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Triển khai trên Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push code lên GitHub repository
 
-## Learn More
+2. Đăng nhập vào [Vercel](https://vercel.com)
 
-To learn more about Next.js, take a look at the following resources:
+3. Import project từ GitHub
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Vercel sẽ tự động phát hiện cấu hình Next.js và triển khai ứng dụng
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. Sau khi triển khai, bạn có thể truy cập ứng dụng tại URL được Vercel cung cấp
 
-## Deploy on Vercel
+## Lưu ý
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Ứng dụng sử dụng file JSON để lưu trữ dữ liệu
+- Trong môi trường development, dữ liệu được lưu tại `src/data/cards.json`
+- Trên Vercel, dữ liệu được lưu tạm thời và sẽ reset sau mỗi lần deploy mới
+- Để lưu trữ dữ liệu vĩnh viễn, bạn nên cân nhắc sử dụng database
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Bảo mật
+
+- Không lưu trữ số thẻ tín dụng đầy đủ
+- Sử dụng HTTPS cho mọi request
+- Validate dữ liệu đầu vào
+- Xử lý lỗi an toàn
+
+## Đóng góp
+
+Mọi đóng góp đều được chào đón. Vui lòng:
+
+1. Fork repository
+2. Tạo branch mới (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Tạo Pull Request
+
+## License
+
+MIT License - xem file [LICENSE.md](LICENSE.md) để biết thêm chi tiết

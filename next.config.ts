@@ -1,7 +1,14 @@
-import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'standalone',
+  experimental: {
+    serverActions: true,
+  },
+  env: {
+    CARDS_FILE_PATH: process.env.NODE_ENV === 'development' 
+      ? 'src/data/cards.json'
+      : '/tmp/cards.json'
+  }
+}
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
-
-export default nextConfig;
+export default nextConfig
