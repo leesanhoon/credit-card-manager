@@ -1,67 +1,58 @@
-import { promises as fs } from 'fs'
-import path from 'path'
-import { CreditCard } from '@/types'
-
-let cachedCards: CreditCard[] | null = null
+import { CreditCard, Payment, PaymentStatus } from '@/types'
+import { jsonbinService } from '@/services/jsonbinService'
+import { JSONBIN_CONFIG } from '@/config/jsonbin'
 
 export async function getCards(): Promise<CreditCard[]> {
-  if (cachedCards) {
-    return cachedCards
-  }
-
-  try {
-    const filePath = process.env.CARDS_FILE_PATH || 'src/data/cards.json'
-    const fullPath = path.join(process.cwd(), filePath)
-    
-    try {
-      await fs.access(fullPath)
-    } catch {
-      // Nếu file không tồn tại, tạo file mới với mảng rỗng
-      await fs.writeFile(fullPath, JSON.stringify({ cards: [] }, null, 2))
-    }
-
-    const jsonData = await fs.readFile(fullPath, 'utf8')
-    const data = JSON.parse(jsonData)
-    cachedCards = data.cards
-    return data.cards
-  } catch (error) {
-    console.error('Error reading cards:', error)
-    return []
-  }
+  const cards = await jsonbinService.getData(JSONBIN_CONFIG.CARDS_BIN_ID)
+  return cards || []
 }
 
-export async function saveCards(cards: CreditCard[]): Promise<void> {
-  try {
-    const filePath = process.env.CARDS_FILE_PATH || 'src/data/cards.json'
-    const fullPath = path.join(process.cwd(), filePath)
-    await fs.writeFile(fullPath, JSON.stringify({ cards }, null, 2))
-    cachedCards = cards
-  } catch (error) {
-    console.error('Error saving cards:', error)
-    throw new Error('Không thể lưu dữ liệu')
-  }
-}
-
-export async function addCard(card: CreditCard): Promise<CreditCard> {
+export async function addCard(card: CreditCard): Promise<void> {
   const cards = await getCards()
   cards.push(card)
-  await saveCards(cards)
-  return card
+  await jsonbinService.updateData(JSONBIN_CONFIG.CARDS_BIN_ID, cards)
 }
 
-export async function updateCard(id: string, updatedCard: CreditCard): Promise<CreditCard> {
+export async function updateCard(id: string, updatedCard: CreditCard): Promise<void> {
   const cards = await getCards()
   const index = cards.findIndex(card => card.id === id)
-  if (index === -1) {
-    throw new Error('Không tìm thấy thẻ')
+  if (index === -1) throw new Error('Không tìm thấy thẻ')
+  
+  cards[index] = {
+    ...updatedCard,
+    updatedAt: new Date()
   }
-  cards[index] = updatedCard
-  await saveCards(cards)
-  return updatedCard
+  await jsonbinService.updateData(JSONBIN_CONFIG.CARDS_BIN_ID, cards)
 }
 
 export async function deleteCard(id: string): Promise<void> {
   const cards = await getCards()
-  const filteredCards = cards.filter(card => card.id !== id)
-  await saveCards(filteredCards)
+  const updatedCards = cards.filter(card => card.id !== id)
+  await jsonbinService.updateData(JSONBIN_CONFIG.CARDS_BIN_ID, updatedCards)
+}
+
+export async function getPayments(): Promise<Payment[]> {
+  const payments = await jsonbinService.getData(JSONBIN_CONFIG.PAYMENTS_BIN_ID)
+  return payments || []
+}
+
+export async function addPayment(payment: Payment): Promise<void> {
+  const payments = await getPayments()
+  payments.push(payment)
+  await jsonbinService.updateData(JSONBIN_CONFIG.PAYMENTS_BIN_ID, payments)
+}
+
+export async function getCardPayments(cardId: string): Promise<Payment[]> {
+  const payments = await getPayments()
+  return payments.filter(payment => payment.cardId === cardId)
+}
+
+export async function updatePaymentStatus(cardId: string, status: PaymentStatus): Promise<void> {
+  const cards = await getCards()
+  const card = cards.find(c => c.id === cardId)
+  if (!card) throw new Error('Không tìm thấy thẻ')
+  
+  card.paymentStatus = status
+  card.updatedAt = new Date()
+  await updateCard(cardId, card)
 }

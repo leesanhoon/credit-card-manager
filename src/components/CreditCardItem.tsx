@@ -26,6 +26,21 @@ export default function CreditCardItem({
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasHistory, setHasHistory] = useState(false)
+
+  // Kiểm tra lịch sử thanh toán khi component mount
+  useEffect(() => {
+    const checkPaymentHistory = async () => {
+      try {
+        const history = await cardService.getPaymentHistory(card.id)
+        setHasHistory(history.length > 0)
+      } catch (err) {
+        console.error('Error checking payment history:', err)
+        setHasHistory(false)
+      }
+    }
+    checkPaymentHistory()
+  }, [card.id])
 
   // Vô hiệu hóa cuộn trang khi modal mở
   useEffect(() => {
@@ -56,15 +71,15 @@ export default function CreditCardItem({
   const renderPaymentStatus = () => {
     const days = daysUntilDue()
     if (paymentStatus === PaymentStatus.COMPLETED) {
-      return { text: 'Đã thanh toán', color: 'text-green-600 font-medium' }
+      return { text: 'Đã thanh toán', color: 'bg-green-100 text-green-700' }
     }
     if (days <= 0) {
-      return { text: 'Quá hạn', color: 'text-red-600 font-medium' }
+      return { text: 'Quá hạn', color: 'bg-red-100 text-red-700' }
     }
     if (days <= 7) {
-      return { text: 'Sắp đến hạn', color: 'text-yellow-600 font-medium' }
+      return { text: 'Sắp đến hạn', color: 'bg-yellow-100 text-yellow-700' }
     }
-    return { text: `Còn ${days} ngày`, color: 'text-blue-600 font-medium' }
+    return { text: `Còn ${days} ngày`, color: 'bg-blue-100 text-blue-700' }
   }
 
   const handlePaymentStatusChange = async () => {
@@ -77,7 +92,9 @@ export default function CreditCardItem({
       await onUpdatePaymentStatus(card.id, newStatus)
       
       if (newStatus === PaymentStatus.COMPLETED) {
-        await cardService.addPayment(card.id, card.currentBalance)
+        await cardService.addPayment(card.id, card.creditLimit)
+        // Cập nhật trạng thái lịch sử
+        setHasHistory(true)
       }
     } catch (err) {
       setError('Không thể cập nhật trạng thái thanh toán')
@@ -106,89 +123,100 @@ export default function CreditCardItem({
 
   return (
     <>
-      <div className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
-        <div 
-          className="p-4 cursor-pointer active:bg-gray-50"
-          onClick={handlePaymentStatusChange}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={paymentStatus === PaymentStatus.COMPLETED}
-                onChange={() => {}} // Handled by parent div click
-                disabled={isUpdating}
-                className="w-6 h-6 rounded border-gray-400 text-blue-600 focus:ring-blue-500"
-              />
-              <h3 className="text-lg font-semibold text-gray-900">{card.name}</h3>
-            </div>
-            <div className={`text-sm ${status.color} px-2 py-1 rounded-full bg-opacity-10`}>
-              {status.text}
-            </div>
-          </div>
+      <div className="border rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+        <div className="relative">
 
-          <div className="ml-9">
-            <p className="text-base font-medium text-gray-800 mb-3">
-              Ngày đến hạn: {card.dueDate}
-            </p>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-base text-gray-800">Số dư hiện tại</span>
-                <span className="font-semibold text-gray-900">{formatCurrency(card.currentBalance)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base text-gray-800">Hạn mức tín dụng</span>
-                <span className="font-semibold text-gray-900">{formatCurrency(card.creditLimit)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="px-4 py-2 bg-red-50 border-t border-red-100">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
-
-        <div className="px-4 py-3 border-t flex justify-end space-x-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleViewHistory()
-            }}
-            className="px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors min-w-[80px] relative"
-            disabled={loading}
+          <div 
+            className="p-4 cursor-pointer active:bg-gray-50"
+            onClick={handlePaymentStatusChange}
           >
-            {loading ? (
-              <>
-                <span className="opacity-0">Lịch sử</span>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="loading-spinner w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={paymentStatus === PaymentStatus.COMPLETED}
+                  onChange={() => {}} // Handled by parent div click
+                  disabled={isUpdating}
+                  className="w-6 h-6 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <h3 className="text-xl font-semibold text-gray-900">{card.name}</h3>
+              </div>
+              <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${status.color}`}>
+                {status.text}
+              </div>
+            </div>
+
+            <div className="ml-9 space-y-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-base text-gray-600">
+                  Ngày đến hạn: <span className="font-semibold text-gray-900">{card.dueDate}</span>
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Hạn mức tín dụng</span>
+                  <span className="text-lg font-semibold text-gray-900">{formatCurrency(card.creditLimit)}</span>
                 </div>
-              </>
-            ) : (
-              'Lịch sử'
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="px-4 py-2 bg-red-50 border-t border-red-100">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          <div className="px-4 py-3 border-t flex justify-end space-x-3">
+            {hasHistory && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleViewHistory()
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors relative"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="opacity-0">Lịch sử</span>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="loading-spinner w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Lịch sử</span>
+                  </div>
+                )}
+              </button>
             )}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(card)
-            }}
-            className="px-4 py-2 text-base font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors min-w-[80px]"
-          >
-            Sửa
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(card.id)
-            }}
-            className="px-4 py-2 text-base font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors min-w-[80px]"
-          >
-            Xóa
-          </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(card)
+              }}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              Sửa
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(card.id)
+              }}
+              className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              Xóa
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { PaymentStatus } from '@/types'
-import { getCards, saveCards } from '@/lib/data'
+import { getCards, updateCard } from '@/lib/data'
 
 // PUT /api/cards/[id]/payment
 export async function PUT(
@@ -19,9 +19,9 @@ export async function PUT(
     }
 
     const cards = await getCards()
-    const cardIndex = cards.findIndex(card => card.id === params.id)
+    const card = cards.find(c => c.id === params.id)
     
-    if (cardIndex === -1) {
+    if (!card) {
       return NextResponse.json(
         { error: 'Không tìm thấy thẻ' },
         { status: 404 }
@@ -29,16 +29,19 @@ export async function PUT(
     }
 
     // Update payment status and balance
-    if (status === PaymentStatus.COMPLETED) {
-      cards[cardIndex].currentBalance = 0
+    const updatedCard = {
+      ...card,
+      paymentStatus: status,
+      currentBalance: status === PaymentStatus.COMPLETED ? 0 : card.creditLimit,
+      updatedAt: new Date()
     }
 
-    await saveCards(cards)
+    await updateCard(params.id, updatedCard)
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       cardId: params.id,
       status,
-      updatedAt: new Date()
+      updatedAt: updatedCard.updatedAt
     })
   } catch (error) {
     console.error('Error updating payment status:', error)

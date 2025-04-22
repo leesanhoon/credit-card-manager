@@ -61,13 +61,28 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
             key={payment.id}
             className="bg-white rounded-lg border p-4"
           >
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex justify-between items-start">
               <div>
-                <div className="font-semibold text-lg text-gray-900 mb-1">
+                <div className="font-semibold text-lg text-gray-900">
                   {formatCurrency(payment.amount)}
                 </div>
-                <div className="text-base text-gray-600">
-                  {formatDate(paymentDate)}
+                <div className="text-sm text-gray-500 space-y-1 mt-2">
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span>{formatDate(paymentDate)}</span>
+                  </div>
                 </div>
               </div>
               <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${statusColors[payment.status]}`}>
@@ -75,7 +90,7 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
               </div>
             </div>
             {payment.notes && (
-              <div className="text-base text-gray-600 mt-2">
+              <div className="text-sm text-gray-600 mt-3 border-t pt-3">
                 {payment.notes}
               </div>
             )}

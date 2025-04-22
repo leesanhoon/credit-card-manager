@@ -1,0 +1,6 @@
+export const JSONBIN_CONFIG = {
+  API_KEY: '$2a$10$ZRcLP/M06g14NXJlSpmMjOy.HADBqXnsvmVib8c9kpAAAWSqX6FAC',
+  CARDS_BIN_ID: '68071a468a456b79668e94b1',
+  PAYMENTS_BIN_ID: '68071b908960c979a58a58d5',
+  BASE_URL: 'https://api.jsonbin.io/v3/b'
+}

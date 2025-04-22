@@ -4,7 +4,7 @@ export interface CreditCard {
   statementDate: number
   dueDate: number
   creditLimit: number
-  currentBalance: number
+  paymentStatus: PaymentStatus
   createdAt: Date
   updatedAt: Date
 }

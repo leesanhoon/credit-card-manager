@@ -1,6 +1,6 @@
 'use client'
 
-import { CreditCard } from '@/types'
+import { CreditCard, PaymentStatus } from '@/types'
 import { useState } from 'react'
 import CurrencyInput from './CurrencyInput'
 import DateInput from './DateInput'
@@ -17,7 +17,7 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
     statementDate: card?.statementDate || 1,
     dueDate: card?.dueDate || 1,
     creditLimit: card?.creditLimit || 0,
-    currentBalance: card?.currentBalance || 0,
+    paymentStatus: card?.paymentStatus || PaymentStatus.PENDING
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,20 +113,6 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
               />
             </div>
 
-            <div>
-              <label htmlFor="currentBalance" className="block text-base font-medium text-gray-900 mb-2">
-                Số dư hiện tại
-              </label>
-              <CurrencyInput
-                id="currentBalance"
-                name="currentBalance"
-                value={formData.currentBalance}
-                onChange={(value) => handleInputChange('currentBalance', value)}
-                required
-                min={0}
-                className="block w-full rounded-lg border border-gray-400 px-4 py-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
-              />
-            </div>
           </div>
 
           <div className="flex flex-col space-y-3 pt-4">

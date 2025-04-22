@@ -2,46 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.react-datepicker {
-  @apply bg-white rounded-lg shadow-lg border border-gray-200 font-sans;
-}
-
-.react-datepicker__header {
-  @apply bg-white border-b border-gray-200 rounded-t-lg;
-}
-
-.react-datepicker__current-month {
-  @apply text-gray-900 font-semibold py-2;
-}
-
-.react-datepicker__day-names {
-  @apply border-b border-gray-100;
-}
-
-.react-datepicker__day-name {
-  @apply text-gray-600 font-medium w-8 h-8 inline-flex items-center justify-center;
-}
-
-.react-datepicker__day {
-  @apply text-gray-900 w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-blue-50 cursor-pointer m-1;
-}
-
-.react-datepicker__day--selected {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
-}
-
-.react-datepicker__day--today {
-  @apply font-semibold;
-}
-
-.react-datepicker__day--disabled {
-  @apply text-gray-400 cursor-not-allowed hover:bg-transparent;
-}
-
-.date-picker-popper {
-  @apply z-50;
-}
-
 /* Modal animations */
 @keyframes slideUp {
   from {
@@ -83,4 +43,14 @@
 /* Safe area padding for mobile browsers */
 .h-safe-bottom {
   height: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide DayPicker when not focused/active */
+.rdp {
+  display: none;
+}
+
+input:focus + div .rdp,
+div:hover > .rdp {
+  display: block;
 }
