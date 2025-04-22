@@ -32,14 +32,19 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       )
     }
 
-    // Update payment status and balance
+    // Cập nhật trạng thái và số tiền của thẻ
+    const newUsedAmount = status === PaymentStatus.COMPLETED ? 0 : card.usedAmount;
+    
     const updatedCard = {
       ...card,
       paymentStatus: status,
-      currentBalance: status === PaymentStatus.COMPLETED ? 0 : card.creditLimit,
+      usedAmount: newUsedAmount,
+      // Luôn tính lại số tiền còn lại dựa trên số tiền đã sử dụng mới
+      remainingAmount: card.creditLimit - newUsedAmount,
       updatedAt: new Date()
     }
 
+    // Lưu thay đổi trong một lần gọi duy nhất
     await updateCard(context.params.id, updatedCard)
 
     return NextResponse.json({

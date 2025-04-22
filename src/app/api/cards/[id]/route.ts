@@ -12,12 +12,12 @@ export async function PUT(
     
     const updatedCardData: CreditCard = {
       ...cardData,
-      id: params.id,
+      id: params?.id,
       createdAt: new Date(), // Sẽ được ghi đè bởi dữ liệu hiện có
       updatedAt: new Date()
     }
 
-    const updatedCard = await updateCard(params.id, updatedCardData)
+    const updatedCard = await updateCard(params?.id, updatedCardData)
     // Chuyển đổi các trường Date thành chuỗi trước khi trả về
     return NextResponse.json({
       ...updatedCard,

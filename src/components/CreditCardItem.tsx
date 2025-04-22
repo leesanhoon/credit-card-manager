@@ -34,6 +34,7 @@ export default function CreditCardItem({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasHistory, setHasHistory] = useState(false)
+  
 
   // Kiểm tra lịch sử thanh toán khi component mount
   useEffect(() => {
@@ -92,14 +93,16 @@ export default function CreditCardItem({
   const handlePaymentStatusChange = async () => {
     try {
       setError(null)
-      const newStatus = paymentStatus === PaymentStatus.COMPLETED
-        ? PaymentStatus.PENDING
-        : PaymentStatus.COMPLETED
-      await onUpdatePaymentStatus(card.id, newStatus)
-      
-      if (newStatus === PaymentStatus.COMPLETED) {
-        await cardService.addPayment(card.id, card.creditLimit)
-        setHasHistory(true)
+      if (!isUpdatingStatus) {
+        // Chỉ xử lý khi chuyển sang trạng thái "Đã thanh toán"
+        if (paymentStatus !== PaymentStatus.COMPLETED) {
+          // Ghi nhận số tiền thanh toán vào lịch sử
+          await cardService.addPayment(card.id, card.usedAmount)
+          setHasHistory(true)
+          
+          // Gọi API cập nhật payment để xử lý mọi thay đổi ở backend
+          await onUpdatePaymentStatus(card.id, PaymentStatus.COMPLETED)
+        }
       }
     } catch (err) {
       setError('Không thể cập nhật trạng thái thanh toán')
@@ -132,20 +135,77 @@ export default function CreditCardItem({
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                {/* Chỉ hiển thị nút thanh toán khi số tiền sử dụng > 0 và chưa thanh toán */}
-                {card.usedAmount > 0 && paymentStatus === PaymentStatus.PENDING && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isUpdatingStatus) {
-                        handlePaymentStatusChange();
-                      }
-                    }}
-                    disabled={isUpdatingStatus}
-                    className={`w-6 h-6 rounded border bg-white border-gray-300 hover:border-blue-500 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isUpdatingStatus ? 'animate-pulse' : ''}`}
-                  />
-                )}
+                {/* Container cho nút thanh toán với khoảng cách cố định */}
+                <div className="w-8 h-8 flex items-center justify-center">
+                  {card.usedAmount > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isUpdatingStatus) {
+                          handlePaymentStatusChange();
+                        }
+                      }}
+                      disabled={isUpdatingStatus}
+                      className={`
+                        relative w-7 h-7 rounded-full
+                        overflow-hidden
+                        ${paymentStatus === PaymentStatus.COMPLETED
+                          ? 'bg-green-500 border-transparent'
+                          : 'bg-white border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                        }
+                        border-2 flex items-center justify-center
+                        transition-all duration-300 ease-in-out
+                        transform hover:scale-105 active:scale-95
+                        focus:outline-none focus:ring-2 focus:ring-offset-2
+                        ${paymentStatus === PaymentStatus.COMPLETED
+                          ? 'focus:ring-green-500'
+                          : 'focus:ring-blue-500'
+                        }
+                        ${isUpdatingStatus ? 'cursor-not-allowed' : 'cursor-pointer'}
+                      `}
+                    >
+                      {isUpdatingStatus ? (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                        </div>
+                      ) : paymentStatus === PaymentStatus.COMPLETED ? (
+                        <svg
+                          className="w-4 h-4 text-white animate-scale-check"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4 text-gray-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                      )}
+                      
+                      {/* Hiệu ứng ripple */}
+                      <span className="absolute inset-0 overflow-hidden rounded-full">
+                        <span className="absolute inset-0 transform scale-0 opacity-0 bg-gray-100 transition-all duration-500 ease-out peer-active:scale-100 peer-active:opacity-50"></span>
+                      </span>
+                    </button>
+                  )}
+                </div>
                 <h3 className={`text-xl font-semibold text-gray-900 ${card.usedAmount === 0 || paymentStatus === PaymentStatus.COMPLETED ? 'ml-9' : ''}`}>{card.name}</h3>
               </div>
               <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${status.color}`}>

@@ -46,6 +46,10 @@ export default function CreditCardForm({ card, onSubmit, onCancel, isSubmitting 
         const creditLimit = name === 'creditLimit' ? Number(value) : prev.creditLimit;
         const usedAmount = name === 'usedAmount' ? Number(value) : prev.usedAmount;
         newData.remainingAmount = creditLimit - usedAmount;
+
+        if(usedAmount > 0){
+          newData.paymentStatus = PaymentStatus.PENDING;
+        }
       }
 
       return newData;

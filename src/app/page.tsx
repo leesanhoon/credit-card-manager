@@ -65,7 +65,8 @@ export default function Home() {
           await updateCard(cardId, {
             ...card,
             usedAmount: 0,
-            paymentStatus: status
+            paymentStatus: status,
+            remainingAmount: card.creditLimit,
           })
         }
       }
