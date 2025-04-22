@@ -53,12 +53,30 @@ npm run dev
 
 5. Sau khi triển khai, bạn có thể truy cập ứng dụng tại URL được Vercel cung cấp
 
-## Lưu ý
+## Cấu trúc dự án
 
-- Ứng dụng sử dụng file JSON để lưu trữ dữ liệu
-- Trong môi trường development, dữ liệu được lưu tại `src/data/cards.json`
-- Trên Vercel, dữ liệu được lưu tạm thời và sẽ reset sau mỗi lần deploy mới
-- Để lưu trữ dữ liệu vĩnh viễn, bạn nên cân nhắc sử dụng database
+```
+src/
+├── app/                    # App Router của Next.js
+│   ├── api/               # API Routes
+│   └── page.tsx           # Trang chính
+├── components/            # React components
+│   ├── CreditCardForm.tsx
+│   ├── CreditCardItem.tsx
+│   └── ...
+├── config/               # Cấu hình
+├── lib/                  # Thư viện và utilities
+├── services/            # Business logic và API services
+├── types/               # TypeScript type definitions
+└── utils/               # Helper functions
+```
+
+## Lưu trữ dữ liệu
+
+- Ứng dụng sử dụng JSONbin.io để lưu trữ dữ liệu
+- Cấu hình JSONbin trong file `src/config/jsonbin.ts`
+- Yêu cầu JSONBIN_SECRET_KEY trong file .env.local
+- Dữ liệu được lưu trữ vĩnh viễn và có thể truy cập từ mọi nơi
 
 ## Bảo mật
 

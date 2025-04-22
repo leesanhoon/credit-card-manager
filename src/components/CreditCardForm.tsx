@@ -27,19 +27,28 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
     onSubmit(formData)
   }
 
-  const handleInputChange = (name: string, value: string | number) => {
+  const handleInputChange = (name: keyof typeof formData, value: string | number) => {
     setFormData(prev => {
-      const updates: any = { [name]: value }
+      const newData = { ...prev };
+      
+      if (name === 'name') {
+        newData.name = String(value);
+      } else if (name === 'paymentStatus') {
+        newData.paymentStatus = value as PaymentStatus;
+      } else {
+        // Các trường số
+        newData[name] = Number(value);
+      }
       
       // Tự động tính toán remainingAmount khi creditLimit hoặc usedAmount thay đổi
       if (name === 'creditLimit' || name === 'usedAmount') {
-        const creditLimit = name === 'creditLimit' ? Number(value) : prev.creditLimit
-        const usedAmount = name === 'usedAmount' ? Number(value) : prev.usedAmount
-        updates.remainingAmount = creditLimit - usedAmount
+        const creditLimit = name === 'creditLimit' ? Number(value) : prev.creditLimit;
+        const usedAmount = name === 'usedAmount' ? Number(value) : prev.usedAmount;
+        newData.remainingAmount = creditLimit - usedAmount;
       }
 
-      return { ...prev, ...updates }
-    })
+      return newData;
+    });
   }
 
   return (

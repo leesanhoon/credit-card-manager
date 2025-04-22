@@ -1,14 +1,18 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { type NextApiRequest } from 'next'
 import { PaymentStatus } from '@/types'
 import { getCards, updateCard } from '@/lib/data'
 
+interface RouteContext {
+  params: {
+    id: string
+  }
+}
+
 // PUT /api/cards/[id]/payment
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    const { status }: { status: PaymentStatus } = await request.json()
+    const { status }: { status: PaymentStatus } = await req.json()
     
     // Validate status
     if (!Object.values(PaymentStatus).includes(status)) {
@@ -19,7 +23,7 @@ export async function PUT(
     }
 
     const cards = await getCards()
-    const card = cards.find(c => c.id === params.id)
+    const card = cards.find(c => c.id === context.params.id)
     
     if (!card) {
       return NextResponse.json(
@@ -36,10 +40,10 @@ export async function PUT(
       updatedAt: new Date()
     }
 
-    await updateCard(params.id, updatedCard)
+    await updateCard(context.params.id, updatedCard)
 
     return NextResponse.json({
-      cardId: params.id,
+      cardId: context.params.id,
       status,
       updatedAt: updatedCard.updatedAt
     })

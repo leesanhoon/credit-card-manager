@@ -26,7 +26,7 @@ export const jsonbinService = {
     }
   },
 
-  async updateData(binId: string, data: any[]) {
+  async updateData<T>(binId: string, data: T[]) {
     try {
       // Đảm bảo data luôn là một mảng
       const arrayData = Array.isArray(data) ? data : [];

@@ -51,7 +51,7 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
           if (isNaN(paymentDate.getTime())) {
             throw new Error('Invalid date')
           }
-        } catch (error) {
+        } catch {
           console.error('Invalid payment date:', payment.paymentDate)
           paymentDate = new Date() // Fallback to current date
         }

@@ -1,6 +1,5 @@
 'use client'
 
-import { formatCurrency } from '@/utils/format'
 import { ChangeEvent, useEffect, useState } from 'react'
 
 interface CurrencyInputProps {

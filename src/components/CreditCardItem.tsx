@@ -133,7 +133,9 @@ export default function CreditCardItem({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    !isUpdating && handlePaymentStatusChange();
+                    if (!isUpdating) {
+                      handlePaymentStatusChange();
+                    }
                   }}
                   disabled={isUpdating}
                   className={`w-6 h-6 rounded border ${
