@@ -126,19 +126,28 @@ export default function CreditCardItem({
       <div className="border rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
         <div className="relative">
 
-          <div 
-            className="p-4 cursor-pointer active:bg-gray-50"
-            onClick={handlePaymentStatusChange}
-          >
+          <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={paymentStatus === PaymentStatus.COMPLETED}
-                  onChange={() => {}} // Handled by parent div click
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    !isUpdating && handlePaymentStatusChange();
+                  }}
                   disabled={isUpdating}
-                  className="w-6 h-6 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
+                  className={`w-6 h-6 rounded border ${
+                    paymentStatus === PaymentStatus.COMPLETED
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'bg-white border-gray-300 hover:border-blue-500'
+                  } flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                >
+                  {paymentStatus === PaymentStatus.COMPLETED && (
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
                 <h3 className="text-xl font-semibold text-gray-900">{card.name}</h3>
               </div>
               <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${status.color}`}>
