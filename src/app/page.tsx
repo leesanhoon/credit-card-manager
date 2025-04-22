@@ -1,61 +1,33 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { CreditCard, PaymentStatus } from '@/types'
 import CreditCardItem from '@/components/CreditCardItem'
 import CreditCardForm from '@/components/CreditCardForm'
 import CreditCardBalance from '@/components/CreditCardBalance'
-import { cardService } from '@/services/cardService'
-
-interface CardPaymentStatus {
-  [cardId: string]: PaymentStatus
-}
+import { useCards } from '@/hooks/useCards'
 
 export default function Home() {
-  const [cards, setCards] = useState<CreditCard[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingCard, setEditingCard] = useState<CreditCard | undefined>()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [paymentStatuses, setPaymentStatuses] = useState<CardPaymentStatus>({})
-
-  useEffect(() => {
-    loadCards()
-  }, [])
-
-  const loadCards = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await cardService.getCards()
-      setCards(data)
-      
-      // Initialize payment statuses
-      const initialStatuses: CardPaymentStatus = {}
-      data.forEach(card => {
-        initialStatuses[card.id] = card.paymentStatus
-      })
-      setPaymentStatuses(initialStatuses)
-    } catch (err) {
-      setError('Không thể tải danh sách thẻ')
-      console.error('Error loading cards:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [formError, setFormError] = useState<string | null>(null)
+  
+  const {
+    cards,
+    error,
+    isLoading,
+    addCard,
+    updateCard,
+    deleteCard,
+    updatePaymentStatus
+  } = useCards()
 
   const handleAddCard = async (cardData: Omit<CreditCard, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      setError(null)
-      const newCard = await cardService.addCard(cardData)
-      setCards(prev => [...prev, newCard])
-      setPaymentStatuses(prev => ({
-        ...prev,
-        [newCard.id]: PaymentStatus.PENDING
-      }))
+      await addCard(cardData)
       setShowForm(false)
     } catch (err) {
-      setError('Không thể thêm thẻ mới')
+      setFormError('Không thể thêm thẻ mới')
       console.error('Error adding card:', err)
     }
   }
@@ -64,57 +36,44 @@ export default function Home() {
     if (!editingCard) return
     
     try {
-      setError(null)
-      const updatedCard = await cardService.updateCard(editingCard.id, cardData)
-      setCards(prev => prev.map(card => 
-        card.id === editingCard.id ? updatedCard : card
-      ))
+      await updateCard(editingCard.id, cardData)
       setEditingCard(undefined)
     } catch (err) {
-      setError('Không thể cập nhật thẻ')
       console.error('Error updating card:', err)
     }
   }
 
   const handleDeleteCard = async (cardId: string) => {
     try {
-      setError(null)
-      await cardService.deleteCard(cardId)
-      setCards(prev => prev.filter(card => card.id !== cardId))
-      setPaymentStatuses(prev => {
-        const newStatuses = { ...prev }
-        delete newStatuses[cardId]
-        return newStatuses
-      })
+      await deleteCard(cardId)
     } catch (err) {
-      setError('Không thể xóa thẻ')
       console.error('Error deleting card:', err)
     }
   }
 
   const handleUpdatePaymentStatus = async (cardId: string, status: PaymentStatus) => {
     try {
-      setError(null)
-      await cardService.updatePaymentStatus(cardId, status)
+      await updatePaymentStatus(cardId, status)
       
-      setPaymentStatuses(prev => ({
-        ...prev,
-        [cardId]: status
-      }))
-      
-      // Cập nhật trạng thái thanh toán của thẻ
-      setCards(prev => prev.map(card =>
-        card.id === cardId
-          ? { ...card, paymentStatus: status }
-          : card
-      ))
+      if (status === PaymentStatus.COMPLETED) {
+        // Tìm thẻ cần cập nhật
+        const card = cards.find(c => c.id === cardId)
+        if (card) {
+          // Cập nhật số tiền đã sử dụng về 0
+          await updateCard(cardId, {
+            ...card,
+            usedAmount: 0,
+            paymentStatus: status
+          })
+        }
+      }
     } catch (err) {
-      setError('Không thể cập nhật trạng thái thanh toán')
+      setFormError('Không thể cập nhật trạng thái thanh toán')
       console.error('Error updating payment status:', err)
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-gray-600">Đang tải...</div>
@@ -140,7 +99,7 @@ export default function Home() {
               <p className="text-3xl font-bold">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
                   .format(cards
-                    .filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING)
+                    .filter(card => card.paymentStatus === PaymentStatus.PENDING)
                     .reduce((sum, card) => sum + card.usedAmount, 0)
                   )}
               </p>
@@ -151,7 +110,7 @@ export default function Home() {
               <p className="text-3xl font-bold">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
                   .format(cards
-                    .filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING)
+                    .filter(card => card.paymentStatus === PaymentStatus.PENDING)
                     .reduce((sum, card) => sum + card.usedAmount, 0))}
               </p>
             </div>
@@ -176,13 +135,13 @@ export default function Home() {
               <div className="flex-1 p-4 text-center">
                 <p className="text-sm text-yellow-600 font-medium whitespace-nowrap">Cần thanh toán</p>
                 <p className="mt-1 text-2xl font-bold text-yellow-700">
-                  {cards.filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING).length}
+                  {cards.filter(card => card.paymentStatus === PaymentStatus.PENDING).length}
                 </p>
               </div>
               <div className="flex-1 p-4 text-center">
                 <p className="text-sm text-green-600 font-medium whitespace-nowrap">Đã thanh toán</p>
                 <p className="mt-1 text-2xl font-bold text-green-700">
-                  {cards.filter(card => paymentStatuses[card.id] === PaymentStatus.COMPLETED).length}
+                  {cards.filter(card => card.paymentStatus === PaymentStatus.COMPLETED).length}
                 </p>
               </div>
             </div>
@@ -192,8 +151,8 @@ export default function Home() {
         {/* Danh sách thẻ */}
         <section className="space-y-3">
           {cards.sort((a, b) => {
-            const statusA = paymentStatuses[a.id]
-            const statusB = paymentStatuses[b.id]
+            const statusA = a.paymentStatus
+            const statusB = b.paymentStatus
             
             // Đã thanh toán xếp cuối
             if (statusA === PaymentStatus.COMPLETED && statusB !== PaymentStatus.COMPLETED) return 1
@@ -226,7 +185,7 @@ export default function Home() {
               onEdit={setEditingCard}
               onDelete={handleDeleteCard}
               onUpdatePaymentStatus={handleUpdatePaymentStatus}
-              paymentStatus={paymentStatuses[card.id]}
+              paymentStatus={card.paymentStatus}
               totalCards={cards.length}
             />
           ))}
