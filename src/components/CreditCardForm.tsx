@@ -17,6 +17,8 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
     statementDate: card?.statementDate || 1,
     dueDate: card?.dueDate || 1,
     creditLimit: card?.creditLimit || 0,
+    usedAmount: card?.usedAmount || 0,
+    remainingAmount: card?.remainingAmount || 0,
     paymentStatus: card?.paymentStatus || PaymentStatus.PENDING
   })
 
@@ -26,10 +28,18 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
   }
 
   const handleInputChange = (name: string, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => {
+      const updates: any = { [name]: value }
+      
+      // Tự động tính toán remainingAmount khi creditLimit hoặc usedAmount thay đổi
+      if (name === 'creditLimit' || name === 'usedAmount') {
+        const creditLimit = name === 'creditLimit' ? Number(value) : prev.creditLimit
+        const usedAmount = name === 'usedAmount' ? Number(value) : prev.usedAmount
+        updates.remainingAmount = creditLimit - usedAmount
+      }
+
+      return { ...prev, ...updates }
+    })
   }
 
   return (
@@ -98,19 +108,46 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
               </div>
             </div>
 
-            <div>
-              <label htmlFor="creditLimit" className="block text-base font-medium text-gray-900 mb-2">
-                Hạn mức tín dụng
-              </label>
-              <CurrencyInput
-                id="creditLimit"
-                name="creditLimit"
-                value={formData.creditLimit}
-                onChange={(value) => handleInputChange('creditLimit', value)}
-                required
-                min={0}
-                className="block w-full rounded-lg border border-gray-400 px-4 py-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
-              />
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="creditLimit" className="block text-base font-medium text-gray-900 mb-2">
+                  Hạn mức tín dụng
+                </label>
+                <CurrencyInput
+                  id="creditLimit"
+                  name="creditLimit"
+                  value={formData.creditLimit}
+                  onChange={(value) => handleInputChange('creditLimit', value)}
+                  required
+                  min={0}
+                  className="block w-full rounded-lg border border-gray-400 px-4 py-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="usedAmount" className="block text-base font-medium text-gray-900 mb-2">
+                  Số tiền đã sử dụng
+                </label>
+                <CurrencyInput
+                  id="usedAmount"
+                  name="usedAmount"
+                  value={formData.usedAmount}
+                  onChange={(value) => handleInputChange('usedAmount', value)}
+                  required
+                  min={0}
+                  max={formData.creditLimit}
+                  className="block w-full rounded-lg border border-gray-400 px-4 py-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="remainingAmount" className="block text-base font-medium text-gray-900 mb-2">
+                  Số tiền còn lại
+                </label>
+                <div className="block w-full rounded-lg border border-gray-400 px-4 py-3 text-base text-gray-900 bg-gray-50">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(formData.remainingAmount)}
+                </div>
+              </div>
             </div>
 
           </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { CreditCard, PaymentStatus } from '@/types'
 import CreditCardItem from '@/components/CreditCardItem'
 import CreditCardForm from '@/components/CreditCardForm'
+import CreditCardBalance from '@/components/CreditCardBalance'
 import { cardService } from '@/services/cardService'
 
 interface CardPaymentStatus {
@@ -32,9 +33,7 @@ export default function Home() {
       // Initialize payment statuses
       const initialStatuses: CardPaymentStatus = {}
       data.forEach(card => {
-        initialStatuses[card.id] = card.currentBalance === 0 
-          ? PaymentStatus.COMPLETED 
-          : PaymentStatus.PENDING
+        initialStatuses[card.id] = card.paymentStatus
       })
       setPaymentStatuses(initialStatuses)
     } catch (err) {
@@ -103,14 +102,12 @@ export default function Home() {
         [cardId]: status
       }))
       
-      // Nếu đã thanh toán, cập nhật số dư về 0
-      if (status === PaymentStatus.COMPLETED) {
-        setCards(prev => prev.map(card => 
-          card.id === cardId 
-            ? { ...card, currentBalance: 0 }
-            : card
-        ))
-      }
+      // Cập nhật trạng thái thanh toán của thẻ
+      setCards(prev => prev.map(card =>
+        card.id === cardId
+          ? { ...card, paymentStatus: status }
+          : card
+      ))
     } catch (err) {
       setError('Không thể cập nhật trạng thái thanh toán')
       console.error('Error updating payment status:', err)
@@ -135,28 +132,94 @@ export default function Home() {
         )}
 
         {/* Phần tổng quan */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <p className="text-sm text-blue-600 font-medium mb-1">Tổng số thẻ</p>
-            <p className="text-2xl font-bold text-blue-700">{cards.length}</p>
+        <section className="space-y-4">
+          {/* Thông tin thanh toán */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white">
+              <p className="text-sm font-medium mb-2 opacity-90">Số tiền cần thanh toán</p>
+              <p className="text-3xl font-bold">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                  .format(cards
+                    .filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING)
+                    .reduce((sum, card) => sum + card.usedAmount, 0)
+                  )}
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+              <p className="text-sm font-medium mb-2 opacity-90">Tổng số tiền nợ</p>
+              <p className="text-3xl font-bold">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                  .format(cards
+                    .filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING)
+                    .reduce((sum, card) => sum + card.usedAmount, 0))}
+              </p>
+            </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <p className="text-sm text-yellow-600 font-medium mb-1">Cần thanh toán</p>
-            <p className="text-2xl font-bold text-yellow-700">
-              {cards.filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING).length}
+
+          {/* Tổng số tiền còn lại */}
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+            <p className="text-sm font-medium mb-2 opacity-90">Tổng số tiền còn lại</p>
+            <p className="text-3xl font-bold">
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                .format(cards.reduce((sum, card) => sum + card.remainingAmount, 0))}
             </p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm col-span-2 sm:col-span-1">
-            <p className="text-sm text-green-600 font-medium mb-1">Đã thanh toán</p>
-            <p className="text-2xl font-bold text-green-700">
-              {cards.filter(card => paymentStatuses[card.id] === PaymentStatus.COMPLETED).length}
-            </p>
+
+          {/* Thống kê số lượng thẻ */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="flex divide-x divide-gray-200">
+              <div className="flex-1 p-4 text-center">
+                <p className="text-sm text-blue-600 font-medium whitespace-nowrap">Tổng số thẻ</p>
+                <p className="mt-1 text-2xl font-bold text-blue-700">{cards.length}</p>
+              </div>
+              <div className="flex-1 p-4 text-center">
+                <p className="text-sm text-yellow-600 font-medium whitespace-nowrap">Cần thanh toán</p>
+                <p className="mt-1 text-2xl font-bold text-yellow-700">
+                  {cards.filter(card => paymentStatuses[card.id] === PaymentStatus.PENDING).length}
+                </p>
+              </div>
+              <div className="flex-1 p-4 text-center">
+                <p className="text-sm text-green-600 font-medium whitespace-nowrap">Đã thanh toán</p>
+                <p className="mt-1 text-2xl font-bold text-green-700">
+                  {cards.filter(card => paymentStatuses[card.id] === PaymentStatus.COMPLETED).length}
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Danh sách thẻ */}
         <section className="space-y-3">
-          {cards.map(card => (
+          {cards.sort((a, b) => {
+            const statusA = paymentStatuses[a.id]
+            const statusB = paymentStatuses[b.id]
+            
+            // Đã thanh toán xếp cuối
+            if (statusA === PaymentStatus.COMPLETED && statusB !== PaymentStatus.COMPLETED) return 1
+            if (statusB === PaymentStatus.COMPLETED && statusA !== PaymentStatus.COMPLETED) return -1
+            
+            // Tính số ngày còn lại
+            const getDaysUntilDue = (card: CreditCard) => {
+              const today = new Date()
+              const currentMonth = today.getMonth()
+              const currentYear = today.getFullYear()
+              const dueDate = new Date(currentYear, currentMonth, card.dueDate)
+              
+              if (today > dueDate) {
+                dueDate.setMonth(dueDate.getMonth() + 1)
+              }
+              
+              const diffTime = dueDate.getTime() - today.getTime()
+              return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            }
+
+            const daysA = getDaysUntilDue(a)
+            const daysB = getDaysUntilDue(b)
+
+            // Sắp xếp theo số ngày còn lại (ít ngày hơn lên trên)
+            return daysA - daysB
+          }).map(card => (
             <CreditCardItem
               key={card.id}
               card={card}
@@ -175,6 +238,13 @@ export default function Home() {
             </div>
           )}
         </section>
+
+        {/* Biểu đồ số dư từng thẻ */}
+        {cards.length > 0 && (
+          <section className="mt-6">
+            <CreditCardBalance cards={cards} />
+          </section>
+        )}
       </div>
 
       {/* Nút thêm thẻ cố định ở bottom */}

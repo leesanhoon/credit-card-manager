@@ -170,6 +170,14 @@ export default function CreditCardItem({
                   <span className="text-gray-600">Hạn mức tín dụng</span>
                   <span className="text-lg font-semibold text-gray-900">{formatCurrency(card.creditLimit)}</span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Số tiền đã sử dụng</span>
+                  <span className="text-lg font-semibold text-red-600">{formatCurrency(card.usedAmount)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Số tiền còn lại</span>
+                  <span className="text-lg font-semibold text-green-600">{formatCurrency(card.remainingAmount)}</span>
+                </div>
               </div>
             </div>
           </div>

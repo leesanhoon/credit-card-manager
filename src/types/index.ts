@@ -4,6 +4,8 @@ export interface CreditCard {
   statementDate: number
   dueDate: number
   creditLimit: number
+  usedAmount: number
+  remainingAmount: number
   paymentStatus: PaymentStatus
   createdAt: Date
   updatedAt: Date

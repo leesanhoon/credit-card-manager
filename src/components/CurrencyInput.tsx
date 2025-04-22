@@ -12,6 +12,7 @@ interface CurrencyInputProps {
   className?: string
   placeholder?: string
   min?: number
+  max?: number
 }
 
 export default function CurrencyInput({
@@ -23,6 +24,7 @@ export default function CurrencyInput({
   className = '',
   placeholder,
   min = 0,
+  max,
 }: CurrencyInputProps) {
   const [displayValue, setDisplayValue] = useState('')
 
@@ -46,6 +48,10 @@ export default function CurrencyInput({
     const parsedValue = parseNumber(inputValue)
     
     if (min !== undefined && parsedValue < min) {
+      return
+    }
+
+    if (max !== undefined && parsedValue > max) {
       return
     }
 
