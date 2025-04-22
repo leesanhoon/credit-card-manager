@@ -12,7 +12,10 @@ interface CreditCardItemProps {
   onDelete: (cardId: string) => void
   onUpdatePaymentStatus: (cardId: string, status: PaymentStatus) => void
   paymentStatus?: PaymentStatus
-  totalCards: number // Thêm prop mới để biết tổng số thẻ
+  totalCards: number
+  isDeleting?: boolean
+  isUpdating?: boolean
+  isUpdatingStatus?: boolean
 }
 
 export default function CreditCardItem({
@@ -21,9 +24,11 @@ export default function CreditCardItem({
   onDelete,
   onUpdatePaymentStatus,
   paymentStatus = PaymentStatus.PENDING,
-  totalCards
+  totalCards,
+  isDeleting = false,
+  isUpdating = false,
+  isUpdatingStatus = false
 }: CreditCardItemProps) {
-  const [isUpdating, setIsUpdating] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
@@ -86,7 +91,6 @@ export default function CreditCardItem({
 
   const handlePaymentStatusChange = async () => {
     try {
-      setIsUpdating(true)
       setError(null)
       const newStatus = paymentStatus === PaymentStatus.COMPLETED
         ? PaymentStatus.PENDING
@@ -95,14 +99,11 @@ export default function CreditCardItem({
       
       if (newStatus === PaymentStatus.COMPLETED) {
         await cardService.addPayment(card.id, card.creditLimit)
-        // Cập nhật trạng thái lịch sử
         setHasHistory(true)
       }
     } catch (err) {
       setError('Không thể cập nhật trạng thái thanh toán')
       console.error('Error updating payment status:', err)
-    } finally {
-      setIsUpdating(false)
     }
   }
 
@@ -125,7 +126,7 @@ export default function CreditCardItem({
 
   return (
     <>
-      <div className="border rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+      <div className="border rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden transform">
         <div className="relative">
 
           <div className="p-4">
@@ -137,12 +138,12 @@ export default function CreditCardItem({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!isUpdating) {
+                      if (!isUpdatingStatus) {
                         handlePaymentStatusChange();
                       }
                     }}
-                    disabled={isUpdating}
-                    className={`w-6 h-6 rounded border bg-white border-gray-300 hover:border-blue-500 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    disabled={isUpdatingStatus}
+                    className={`w-6 h-6 rounded border bg-white border-gray-300 hover:border-blue-500 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isUpdatingStatus ? 'animate-pulse' : ''}`}
                   />
                 )}
                 <h3 className={`text-xl font-semibold text-gray-900 ${card.usedAmount === 0 || paymentStatus === PaymentStatus.COMPLETED ? 'ml-9' : ''}`}>{card.name}</h3>
@@ -192,7 +193,7 @@ export default function CreditCardItem({
                   e.stopPropagation()
                   handleViewHistory()
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors relative"
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-all relative transform hover:scale-105"
                 disabled={loading}
               >
                 {loading ? (
@@ -217,7 +218,7 @@ export default function CreditCardItem({
                 e.stopPropagation()
                 onEdit(card)
               }}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-all transform hover:scale-105"
             >
               Sửa
             </button>
@@ -228,7 +229,7 @@ export default function CreditCardItem({
                   e.stopPropagation()
                   onDelete(card.id)
                 }}
-                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all transform hover:scale-105"
               >
                 Xóa
               </button>
@@ -239,11 +240,11 @@ export default function CreditCardItem({
 
       {showHistory && (
         <div className="fixed inset-0 z-50">
-          <div 
-            className="modal-overlay absolute inset-0 bg-black bg-opacity-50"
+          <div
+            className="modal-overlay absolute inset-0 bg-black bg-opacity-50 animate-fade-in"
             onClick={() => setShowHistory(false)}
           />
-          <div className="modal-content fixed bottom-0 inset-x-0 bg-white rounded-t-2xl max-h-[90vh] overflow-y-auto">
+          <div className="modal-content fixed bottom-0 inset-x-0 bg-white rounded-t-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
             <div className="sticky top-0 bg-white pb-4 mb-4 border-b px-4 pt-4 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-gray-900">Lịch sử thanh toán</h3>
               <button

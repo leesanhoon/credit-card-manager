@@ -5,13 +5,14 @@ import { CreditCard, PaymentStatus } from '@/types'
 import CreditCardItem from '@/components/CreditCardItem'
 import CreditCardForm from '@/components/CreditCardForm'
 import CreditCardBalance from '@/components/CreditCardBalance'
+import CreditCardSkeleton from '@/components/CreditCardSkeleton'
 import { useCards } from '@/hooks/useCards'
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false)
   const [editingCard, setEditingCard] = useState<CreditCard | undefined>()
   const [formError, setFormError] = useState<string | null>(null)
-  
+
   const {
     cards,
     error,
@@ -19,7 +20,11 @@ export default function Home() {
     addCard,
     updateCard,
     deleteCard,
-    updatePaymentStatus
+    updatePaymentStatus,
+    isAdding,
+    isUpdating,
+    isDeleting,
+    isUpdatingStatus
   } = useCards()
 
   const handleAddCard = async (cardData: Omit<CreditCard, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -34,7 +39,6 @@ export default function Home() {
 
   const handleEditCard = async (cardData: Omit<CreditCard, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!editingCard) return
-    
     try {
       await updateCard(editingCard.id, cardData)
       setEditingCard(undefined)
@@ -56,10 +60,8 @@ export default function Home() {
       await updatePaymentStatus(cardId, status)
       
       if (status === PaymentStatus.COMPLETED) {
-        // Tìm thẻ cần cập nhật
         const card = cards.find(c => c.id === cardId)
         if (card) {
-          // Cập nhật số tiền đã sử dụng về 0
           await updateCard(cardId, {
             ...card,
             usedAmount: 0,
@@ -75,8 +77,24 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Đang tải...</div>
+      <div className="space-y-4 animate-fade-in">
+        {/* Skeleton cho phần tổng quan */}
+        <section className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[1, 2].map(i => (
+              <div key={i} className="animate-skeleton h-32 bg-white rounded-xl" />
+            ))}
+          </div>
+          <div className="animate-skeleton h-32 bg-white rounded-xl" />
+          <div className="animate-skeleton h-24 bg-white rounded-xl" />
+        </section>
+        
+        {/* Skeleton cho danh sách thẻ */}
+        <section className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <CreditCardSkeleton key={i} />
+          ))}
+        </section>
       </div>
     )
   }
@@ -179,15 +197,22 @@ export default function Home() {
             // Sắp xếp theo số ngày còn lại (ít ngày hơn lên trên)
             return daysA - daysB
           }).map(card => (
-            <CreditCardItem
+            <div
               key={card.id}
-              card={card}
-              onEdit={setEditingCard}
-              onDelete={handleDeleteCard}
-              onUpdatePaymentStatus={handleUpdatePaymentStatus}
-              paymentStatus={card.paymentStatus}
-              totalCards={cards.length}
-            />
+              className={`transition-all duration-200 transform ${
+                isDeleting === card.id || isUpdating === card.id ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+              }`}
+            >
+              <CreditCardItem
+                key={card.id}
+                card={card}
+                onEdit={setEditingCard}
+                onDelete={handleDeleteCard}
+                onUpdatePaymentStatus={handleUpdatePaymentStatus}
+                paymentStatus={card.paymentStatus}
+                totalCards={cards.length}
+              />
+            </div>
           ))}
 
           {cards.length === 0 && !showForm && (
@@ -228,6 +253,7 @@ export default function Home() {
             setShowForm(false)
             setEditingCard(undefined)
           }}
+          isSubmitting={isAdding || (editingCard && isUpdating === editingCard.id)}
         />
       )}
     </>

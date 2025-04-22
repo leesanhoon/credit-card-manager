@@ -9,9 +9,10 @@ interface CreditCardFormProps {
   card?: CreditCard
   onSubmit: (card: Omit<CreditCard, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
+  isSubmitting?: boolean
 }
 
-export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardFormProps) {
+export default function CreditCardForm({ card, onSubmit, onCancel, isSubmitting = false }: CreditCardFormProps) {
   const [formData, setFormData] = useState({
     name: card?.name || '',
     statementDate: card?.statementDate || 1,
@@ -52,8 +53,8 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
-      <div className="bg-white rounded-t-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-end z-50 animate-fade-in">
+      <div className="bg-white rounded-t-2xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
         <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">
             {card ? 'Sửa thẻ' : 'Thêm thẻ mới'}
@@ -164,9 +165,17 @@ export default function CreditCardForm({ card, onSubmit, onCancel }: CreditCardF
           <div className="flex flex-col space-y-3 pt-4">
             <button
               type="submit"
-              className="w-full px-4 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              disabled={isSubmitting}
+              className="w-full px-4 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed relative"
             >
-              {card ? 'Cập nhật' : 'Thêm thẻ'}
+              <span className={isSubmitting ? 'opacity-0' : 'opacity-100'}>
+                {card ? 'Cập nhật' : 'Thêm thẻ'}
+              </span>
+              {isSubmitting && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </div>
+              )}
             </button>
             <button
               type="button"
