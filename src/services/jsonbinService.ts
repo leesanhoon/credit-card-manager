@@ -35,7 +35,7 @@ export const jsonbinService = {
         arrayData,
         { headers: getHeaders() }
       );
-      return response.data;
+      return response.data?.record || null;
     } catch (error) {
       console.error('Error updating data in JSONBin:', error);
       throw error;

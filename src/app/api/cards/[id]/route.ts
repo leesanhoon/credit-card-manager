@@ -17,8 +17,13 @@ export async function PUT(
       updatedAt: new Date()
     }
 
-    const result = await updateCard(params.id, updatedCardData)
-    return NextResponse.json(result)
+    const updatedCard = await updateCard(params.id, updatedCardData)
+    // Chuyển đổi các trường Date thành chuỗi trước khi trả về
+    return NextResponse.json({
+      ...updatedCard,
+      createdAt: updatedCard.createdAt.toISOString(),
+      updatedAt: updatedCard.updatedAt.toISOString()
+    })
   } catch (error) {
     console.error('Error in PUT /api/cards/[id]:', error)
     return NextResponse.json(

@@ -227,6 +227,7 @@ export default function Home() {
               onDelete={handleDeleteCard}
               onUpdatePaymentStatus={handleUpdatePaymentStatus}
               paymentStatus={paymentStatuses[card.id]}
+              totalCards={cards.length}
             />
           ))}
 
